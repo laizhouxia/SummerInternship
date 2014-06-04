@@ -5,7 +5,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import boofcv.struct.image.ImageFloat32;
-
+import org.ddogleg.struct.FastQueue;
+import georegression.struct.point.Point2D_F64;
 
 public class MainActivity extends ActionBarActivity {
 
