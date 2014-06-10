@@ -11,17 +11,39 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Image"
-        android:id="@+id/addImageButton"
-        android:layout_marginTop="48dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:text="Add Image I"
+        android:id="@+id/addImageIButton"
+        android:layout_marginTop="71dp"
+        android:layout_alignTop="@+id/imageI"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <ImageView
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:id="@+id/image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:id="@+id/imageI"
         android:src="@drawable/ic_launcher"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_marginTop="32dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/imageII"
+        android:layout_alignStart="@+id/imageII" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Image II"
+        android:id="@+id/addImageIIButton"
+        android:layout_marginTop="75dp"
+        android:layout_alignTop="@+id/imageII"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:id="@+id/imageII"
+        android:src="@drawable/ic_launcher"
+        android:layout_below="@+id/imageI"
+        android:layout_toRightOf="@+id/addImageIIButton"
+        android:layout_marginTop="36dp" />
 </RelativeLayout>
