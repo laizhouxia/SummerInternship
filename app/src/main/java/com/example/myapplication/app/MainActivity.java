@@ -15,35 +15,43 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import org.ddogleg.struct.FastQueue;
 
+import boofcv.abst.feature.associate.AssociateDescription;
+import boofcv.abst.feature.associate.ScoreAssociation;
 import boofcv.abst.feature.detdesc.DetectDescribePoint;
 import boofcv.abst.feature.detect.extract.ConfigExtract;
 import boofcv.abst.feature.detect.extract.NonMaxSuppression;
+
 import boofcv.abst.feature.detect.interest.ConfigFastHessian;
-import boofcv.abst.feature.detect.interest.InterestPointDetector;
 import boofcv.abst.feature.orientation.OrientationIntegral;
+import boofcv.alg.feature.UtilFeature;
 import boofcv.alg.feature.describe.DescribePointSurf;
 import boofcv.alg.feature.detect.interest.FastHessianFeatureDetector;
 import boofcv.alg.transform.ii.GIntegralImageOps;
 import boofcv.android.ConvertBitmap;
-import boofcv.android.ImplConvertBitmap;
+
 import boofcv.core.image.ConvertBufferedImage;
-import boofcv.core.image.ConvertImage;
 import boofcv.core.image.GeneralizedImageOps;
+import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.describe.FactoryDescribePointAlgs;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.factory.feature.detect.extract.FactoryFeatureExtractor;
-import boofcv.factory.feature.detect.interest.FactoryInterestPoint;
 import boofcv.factory.feature.orientation.FactoryOrientationAlgs;
-import boofcv.gui.feature.FancyInterestPointRender;
-import boofcv.io.image.UtilImageIO;
+
+import boofcv.gui.feature.AssociationPanel;
+import boofcv.struct.feature.AssociatedIndex;
 import boofcv.struct.feature.ScalePoint;
 import boofcv.struct.feature.SurfFeature;
+import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
-import org.ddogleg.struct.FastQueue;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
+
+
 
 import boofcv.struct.image.ImageSingleBand;
 import georegression.struct.point.Point2D_F64;
@@ -51,7 +59,7 @@ import georegression.struct.point.Point2D_F64;
 
 public class MainActivity extends ActionBarActivity {
 
-    Button addImageIButton, addImageIIButton;
+    Button addImageIButton, addImageIIButton, matchButton;
     ImageView imageI, imageII;
     List<ImageInfor> imageList = new ArrayList<ImageInfor>();
 
@@ -64,6 +72,7 @@ public class MainActivity extends ActionBarActivity {
 
         addImageIButton = (Button) findViewById(R.id.addImageIButton);
         addImageIIButton = (Button) findViewById(R.id.addImageIIButton);
+        matchButton = (Button) findViewById(R.id.matchButton);
 
         imageI = (ImageView) findViewById(R.id.imageI);
         imageII = (ImageView) findViewById(R.id.imageII);
@@ -71,6 +80,9 @@ public class MainActivity extends ActionBarActivity {
         addImageIButton.setOnClickListener(buttonOneListener);
 
         addImageIIButton.setOnClickListener(buttonTwoListener);
+
+        matchButton.setOnClickListener(matchButtonListener);
+
     }
 
     public View.OnClickListener buttonOneListener = new View.OnClickListener() {
@@ -92,6 +104,82 @@ public class MainActivity extends ActionBarActivity {
             startActivityForResult(Intent.createChooser(intent, "Select contact image"), 2);
         }
     };
+
+    public View.OnClickListener matchButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            match(imageList.size()-2 ,imageList.size()-1);
+        }
+    };
+
+    private <T extends ImageSingleBand, TD extends TupleDesc> void match(int one, int two){
+        Bitmap imgOne = imageList.get(one).getImg();
+        Bitmap imgTwo = imageList.get(two).getImg();
+
+        Class imageType = ImageFloat32.class;
+        DetectDescribePoint detDesc = FactoryDetectDescribe.surfStable(
+                new ConfigFastHessian(1, 2, 200, 1, 9, 4, 4), null,null, imageType);
+
+        ScoreAssociation scorer = FactoryAssociation.defaultScore(detDesc.getDescriptionType());
+        AssociateDescription associate = FactoryAssociation.greedy(scorer, Double.MAX_VALUE, true);
+
+        T inputA = (T)ConvertBitmap.bitmapToGray(imgOne,  null, imageType, null);
+                //ConvertBufferedImage.convertFromSingle(imageA, null, imageType);
+        T inputB = (T)ConvertBitmap.bitmapToGray(imgTwo,  null, imageType, null);
+
+        List<Point2D_F64> pointsA = new ArrayList<Point2D_F64>();
+        List<Point2D_F64> pointsB = new ArrayList<Point2D_F64>();
+
+        FastQueue<TD> descA = UtilFeature.createQueue(detDesc, 100);
+        FastQueue<TD> descB = UtilFeature.createQueue(detDesc,100);
+
+        detDesc.detect(inputA);
+        for( int i = 0; i < detDesc.getNumberOfFeatures(); i++ ) {
+            pointsA.add( detDesc.getLocation(i).copy() );
+            descA.grow().setTo(detDesc.getDescription(i));
+        }
+
+        detDesc.detect(inputB);
+        for( int i = 0; i < detDesc.getNumberOfFeatures(); i++ ) {
+            pointsB.add( detDesc.getLocation(i).copy() );
+            descB.grow().setTo(detDesc.getDescription(i));
+        }
+
+
+        associate.setSource(descA);
+        associate.setDestination(descB);
+        associate.associate();
+
+        FastQueue<AssociatedIndex> matches = associate.getMatches();
+
+        Bitmap reImgOne = imgOne.copy(imgOne.getConfig(), true);
+        Bitmap reImgTwo = imgTwo.copy(imgTwo.getConfig(), true);
+
+
+        for( int i = 0; i < matches.size; i++ ) {
+            AssociatedIndex a = matches.data[i];
+
+            ScalePoint point1 = imageList.get(one).getResultPoints().get(a.src);
+            reImgOne.setPixel((int)point1.x, (int)point1.y, Color.RED);
+
+
+            ScalePoint point2 = imageList.get(two).getResultPoints().get(a.src);
+            reImgTwo.setPixel((int)point2.x, (int)point2.y, Color.RED);
+
+        }
+
+        System.out.println("Matches:" + associate.getMatches().size());
+
+        imageI.setImageBitmap(reImgOne);
+        imageII.setImageBitmap(reImgTwo);
+      //  AssociationPanel panel = new AssociationPanel(20);
+       // panel.setAssociation(pointsA,pointsB,associate.getMatches());
+
+
+
+    }
+
+
 
     public void onActivityResult(int reqCode, int resCode, Intent imageReturnedIntent){
 
@@ -120,14 +208,18 @@ public class MainActivity extends ActionBarActivity {
             List<ScalePoint> resultPoints = harder(img, descriptions);
             // get the feature points
 
-            imageList.add(new ImageInfor(descriptions, resultPoints));
 
             System.out.println("Found Features: "+resultPoints.size());
-            System.out.println("First descriptor's first value: "+descriptions.get(0));
+
+            for (int i = 0; i< descriptions.get(0).getValue().length; i++) {
+                System.out.println("First descriptor's "+i + " value: " + descriptions.get(0).value[i]);
+            }
             System.out.println("First descriptor's first location: "+resultPoints.get(0).x+"," +resultPoints.get(0).y);
 
             Bitmap resultImage = yourSelectedImage.copy(yourSelectedImage.getConfig(), true);
                 // Bitmap enable change pixel.
+
+            imageList.add(new ImageInfor(yourSelectedImage, descriptions, resultPoints));
 
             for( ScalePoint p : resultPoints ) {
 
@@ -155,6 +247,8 @@ public class MainActivity extends ActionBarActivity {
         }
 
     }
+
+
 
     public static <II extends ImageSingleBand> List<ScalePoint> harder( ImageFloat32 image_ , List<SurfFeature> descriptions) {
         // SURF works off of integral images
@@ -212,6 +306,8 @@ public class MainActivity extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

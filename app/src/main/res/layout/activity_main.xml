@@ -11,7 +11,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Image I"
+        android:text="Image I"
         android:id="@+id/addImageIButton"
         android:layout_marginTop="71dp"
         android:layout_alignTop="@+id/imageI"
@@ -19,11 +19,11 @@
         android:layout_alignParentStart="true" />
 
     <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="230dp"
+        android:layout_height="230dp"
         android:id="@+id/imageI"
         android:src="@drawable/ic_launcher"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="0dp"
         android:layout_alignParentTop="true"
         android:layout_alignLeft="@+id/imageII"
         android:layout_alignStart="@+id/imageII" />
@@ -31,7 +31,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Image II"
+        android:text="Image II"
         android:id="@+id/addImageIIButton"
         android:layout_marginTop="75dp"
         android:layout_alignTop="@+id/imageII"
@@ -39,11 +39,20 @@
         android:layout_alignParentStart="true" />
 
     <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="230dp"
+        android:layout_height="230dp"
         android:id="@+id/imageII"
         android:src="@drawable/ic_launcher"
-        android:layout_below="@+id/imageI"
-        android:layout_toRightOf="@+id/addImageIIButton"
-        android:layout_marginTop="36dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/addImageIIButton" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Match"
+        android:id="@+id/matchButton"
+        android:singleLine="false"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/imageI" />
 </RelativeLayout>
