@@ -66,11 +66,10 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
         System.out.println("this line is size"+associate.getMatches().size());
         int res = 0;
         for(int i=0;i<associate.getMatches().size();i++) {
-            System.out.println(associate.getMatches().get(i).fitScore);
             if(associate.getMatches().get(i).fitScore<0.1)
                 res++;
         }
-        System.out.print("this is good match: "+res);
+        System.out.println("this is good match: "+res);
     }
 
     /**

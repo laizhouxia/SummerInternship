@@ -21,6 +21,8 @@ import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
+import android.app.Activity;
+import android.os.AsyncTask;
 
 
 
@@ -84,38 +86,57 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LOAD_IMAGE_RESULTS && resultCode == RESULT_OK && data != null) {
-            associateTwoPhotos(data);
+            Uri pickedImage = data.getData();
+            String[] filePath = { MediaStore.Images.Media.DATA };
+            Cursor cursor = getContentResolver().query(pickedImage, filePath, null, null, null);
+            cursor.moveToFirst();
+            String imagePath = cursor.getString(cursor.getColumnIndex(filePath[0]));
+            System.out.println("image path "+imagePath);
+            if(count == 0){
+                count++;
+                path1 = imagePath;
+                image.setImageBitmap(BitmapFactory.decodeFile(path1));
+                return;
+            }
+            else{
+                path2 = imagePath;
+                image2.setImageBitmap(BitmapFactory.decodeFile(path2));
+                count=0;
+            }
+            AsyncTaskRunner runner = new AsyncTaskRunner();
+            runner.execute(path1,path2);
+            // At the end remember to close the cursor or you will end with the RuntimeException!
+            cursor.close();
         }
 
     }
+    private class AsyncTaskRunner extends AsyncTask<String, Void, Boolean>{
 
+        protected Boolean doInBackground(String... param) {
 
-    private void associateTwoPhotos(Intent data) {
-        Uri pickedImage = data.getData();
-        String[] filePath = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContentResolver().query(pickedImage, filePath, null, null, null);
-        cursor.moveToFirst();
-        String imagePath = cursor.getString(cursor.getColumnIndex(filePath[0]));
-        System.out.println("image path "+imagePath);
+            String path1 = param[0];
+            String path2 = param[1];
 
-        if(count == 0){
-            count++;
-            path1 = imagePath;
-            image.setImageBitmap(BitmapFactory.decodeFile(path1));
-            return;
-        }
-        else{
-            path2 = imagePath;
-            image2.setImageBitmap(BitmapFactory.decodeFile(path2));
-            count=0;
+            Bitmap yourSelectedImage = BitmapFactory.decodeFile(path1);
+            Bitmap yourSelectedImage2 = BitmapFactory.decodeFile(path2);
+            app.associate(yourSelectedImage,yourSelectedImage2);
+
+            return true;
         }
 
-        Bitmap yourSelectedImage = BitmapFactory.decodeFile(path1);
-        Bitmap yourSelectedImage2 = BitmapFactory.decodeFile(path2);
-        app.associate(yourSelectedImage,yourSelectedImage2);
+        protected void onProgressUpdate()
+        {
+        }
 
-        // At the end remember to close the cursor or you will end with the RuntimeException!
-        cursor.close();
+        protected void onPostExecute(Intent data) {
+
+        }
+
+        protected void onPreExecute() {}
+    }
+
+    private void associateTwoPhotos() {
+
     }
 
     class Button_Clicker1 implements Button.OnClickListener
