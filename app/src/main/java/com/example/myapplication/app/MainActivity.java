@@ -21,7 +21,6 @@ import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
-import android.app.Activity;
 import android.os.AsyncTask;
 
 

@@ -11,6 +11,21 @@ import boofcv.android.ConvertBitmap;
 import android.graphics.Bitmap;
 import java.util.ArrayList;
 import java.util.List;
+import org.ejml.data.DenseMatrix64F;
+import boofcv.struct.feature.AssociatedIndex;
+import boofcv.struct.geo.AssociatedPair;
+import org.ddogleg.fitting.modelset.ModelFitter;
+import org.ddogleg.fitting.modelset.ModelManager;
+import org.ddogleg.fitting.modelset.ModelMatcher;
+import org.ddogleg.fitting.modelset.ransac.Ransac;
+import boofcv.abst.geo.Estimate1ofEpipolar;
+import boofcv.abst.geo.fitting.DistanceFromModelResidual;
+import boofcv.abst.geo.fitting.GenerateEpipolarMatrix;
+import boofcv.abst.geo.fitting.ModelManagerEpipolarMatrix;
+import boofcv.alg.geo.f.FundamentalResidualSampson;
+import boofcv.factory.geo.EnumEpipolar;
+import boofcv.factory.geo.EpipolarError;
+import boofcv.factory.geo.FactoryMultiView;
 
 
 public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
@@ -70,6 +85,32 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
                 res++;
         }
         System.out.println("this is good match: "+res);
+
+
+        List<AssociatedPair> matches = new ArrayList<AssociatedPair>();
+        FastQueue<AssociatedIndex> matchIndexes = associate.getMatches();
+        for( int i = 0; i < matchIndexes.size; i++ )
+            if(associate.getMatches().get(i).fitScore<0.1){
+                AssociatedIndex a = matchIndexes.get(i);
+                AssociatedPair p = new AssociatedPair(pointsA.get(a.src) , pointsB.get(a.dst));
+                matches.add(p);
+            }
+
+        // Where the fundamental matrix is stored
+        DenseMatrix64F F;
+        // List of matches that matched the model
+        List<AssociatedPair> inliers = new ArrayList<AssociatedPair>();
+
+        // estimate and print the results using a robust and simple estimator
+        // The results should be difference since there are many false associations in the simple model
+        // Also note that the fundamental matrix is only defined up to a scale factor.
+        F = robustFundamental(matches, inliers);
+        System.out.println("Robust");
+        F.print();
+
+        F = simpleFundamental(matches);
+        System.out.println("Simple");
+        F.print();
     }
 
     /**
@@ -85,4 +126,54 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
         }
     }
 
+
+    public static DenseMatrix64F robustFundamental( List<AssociatedPair> matches ,
+                                                    List<AssociatedPair> inliers ) {
+
+        // used to create and copy new instances of the fit model
+        ModelManager<DenseMatrix64F> managerF = new ModelManagerEpipolarMatrix();
+        // Select which linear algorithm is to be used.  Try playing with the number of remove ambiguity points
+        Estimate1ofEpipolar estimateF = FactoryMultiView.computeFundamental_1(EnumEpipolar.FUNDAMENTAL_7_LINEAR, 2);
+        // Wrapper so that this estimator can be used by the robust estimator
+        GenerateEpipolarMatrix generateF = new GenerateEpipolarMatrix(estimateF);
+
+        // How the error is measured
+        DistanceFromModelResidual<DenseMatrix64F,AssociatedPair> errorMetric =
+                new DistanceFromModelResidual<DenseMatrix64F,AssociatedPair>(new FundamentalResidualSampson());
+
+        // Use RANSAC to estimate the Fundamental matrix
+        ModelMatcher<DenseMatrix64F,AssociatedPair> robustF =
+                new Ransac<DenseMatrix64F, AssociatedPair>(123123,managerF,generateF,errorMetric,6000,0.1);
+
+        // Estimate the fundamental matrix while removing outliers
+        if( !robustF.process(matches) )
+            throw new IllegalArgumentException("Failed");
+
+        // save the set of features that were used to compute the fundamental matrix
+        inliers.addAll(robustF.getMatchSet());
+
+        // Improve the estimate of the fundamental matrix using non-linear optimization
+        DenseMatrix64F F = new DenseMatrix64F(3,3);
+        ModelFitter<DenseMatrix64F,AssociatedPair> refine =
+                FactoryMultiView.refineFundamental(1e-8, 400, EpipolarError.SAMPSON);
+        if( !refine.fitModel(inliers, robustF.getModelParameters(), F) )
+            throw new IllegalArgumentException("Failed");
+
+        // Return the solution
+        return F;
+    }
+
+
+    public static DenseMatrix64F simpleFundamental( List<AssociatedPair> matches ) {
+        // Use the 8-point algorithm since it will work with an arbitrary number of points
+        Estimate1ofEpipolar estimateF = FactoryMultiView.computeFundamental_1(EnumEpipolar.FUNDAMENTAL_8_LINEAR, 0);
+
+        DenseMatrix64F F = new DenseMatrix64F(3,3);
+        if( !estimateF.process(matches,F) )
+            throw new IllegalArgumentException("Failed");
+
+        // while not done here, this initial linear estimate can be refined using non-linear optimization
+        // as was done above.
+        return F;
+    }
 }
