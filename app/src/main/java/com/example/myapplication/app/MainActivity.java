@@ -89,6 +89,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
     }
 
+
     private void associateTwoPhotos(Intent data) {
         Uri pickedImage = data.getData();
         String[] filePath = { MediaStore.Images.Media.DATA };
