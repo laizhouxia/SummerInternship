@@ -8,7 +8,7 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.example.myapplication.app.MainActivity">
 
-    <Button
+ <!--   <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add Image I"
@@ -45,5 +45,59 @@
         android:src="@drawable/ic_launcher"
         android:layout_below="@+id/imageI"
         android:layout_toRightOf="@+id/addImageIIButton"
-        android:layout_marginTop="36dp" />
+        android:layout_marginTop="36dp" />-->
+    <LinearLayout
+        android:background="#0000FF"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_weight="1">
+        <LinearLayout
+            android:background="#0000FF"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1">
+            <Button
+                android:id="@+id/button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="15dp"
+                android:text="pick_button" />
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_launcher" />
+        </LinearLayout>
+        <LinearLayout
+            android:background="#0000FF"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_weight="1">
+            <Button
+                android:id="@+id/button2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="15dp"
+                android:text="pick_button" />
+
+            <ImageView
+                android:id="@+id/image2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_launcher" />
+        </LinearLayout>
+    </LinearLayout>>
 </RelativeLayout>
