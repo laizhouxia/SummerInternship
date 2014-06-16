@@ -23,25 +23,25 @@ import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
 import android.os.AsyncTask;
 
+import java.util.ArrayList;
+import java.util.List;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 
 
 public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
     //Global Constant
-    private static int LOAD_IMAGE_RESULTS = 1;
-
+    static int TAKE_PICTURE = 1;
 
     // GUI components
     private Button button,button2;  // The button
-    private ImageView image,image2;// ImageView
+    private ImageView image;// ImageView
 
 
     //Global variable
-    int count = 0;
-    String path1 = "";
-    String path2 = "";
     AssociatePoints app;
-
+    ArrayList<Bitmap> photos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +53,6 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         button = (Button)findViewById(R.id.button);
         image = (ImageView)findViewById(R.id.image);
         button2 = (Button)findViewById(R.id.button2);
-        image2 = (ImageView)findViewById(R.id.image2);
 
         // Set button's onClick listener object.
         button.setOnClickListener(new Button_Clicker1());
@@ -65,6 +64,20 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         ScoreAssociation scorer = FactoryAssociation.defaultScore(detDesc.getDescriptionType());
         AssociateDescription associate = FactoryAssociation.greedy(scorer, Double.MAX_VALUE, true);
         app = new AssociatePoints(detDesc,associate,imageType);
+
+        //Initialize other golbal variables
+        photos = new ArrayList<Bitmap>();
+
+
+        // Does your device have a camera?
+        if(hasCamera()){
+            System.out.println("has camera");
+        }
+
+        // Do you have Camera Apps?
+        if(hasDefualtCameraApp(MediaStore.ACTION_IMAGE_CAPTURE)){
+            System.out.println("has camera app");
+        }
     }
 
     @Override
@@ -82,42 +95,31 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         return super.onOptionsItemSelected(item);
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == LOAD_IMAGE_RESULTS && resultCode == RESULT_OK && data != null) {
-            Uri pickedImage = data.getData();
-            String[] filePath = { MediaStore.Images.Media.DATA };
-            Cursor cursor = getContentResolver().query(pickedImage, filePath, null, null, null);
-            cursor.moveToFirst();
-            String imagePath = cursor.getString(cursor.getColumnIndex(filePath[0]));
-            System.out.println("image path "+imagePath);
-            if(count == 0){
-                count++;
-                path1 = imagePath;
-                image.setImageBitmap(BitmapFactory.decodeFile(path1));
-                return;
-            }
-            else{
-                path2 = imagePath;
-                image2.setImageBitmap(BitmapFactory.decodeFile(path2));
-                count=0;
-            }
-            AsyncTaskRunner runner = new AsyncTaskRunner();
-            runner.execute(path1,path2);
-            // At the end remember to close the cursor or you will end with the RuntimeException!
-            cursor.close();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        System.out.println("test");
+        System.out.println(resultCode+" "+requestCode+" ");
+        System.out.println(intent);
+        if (requestCode == TAKE_PICTURE && resultCode == RESULT_OK && intent != null){
+            // get bundle
+            Bundle extras = intent.getExtras();
+
+            // get bitmap
+            Bitmap bitMap = (Bitmap) extras.get("data");
+            System.out.println("test1");
+            photos.add(bitMap);
+            System.out.println("test2");
+            image.setImageBitmap(bitMap);
+            System.out.println("test3");
         }
-
     }
-    private class AsyncTaskRunner extends AsyncTask<String, Void, Boolean>{
 
-        protected Boolean doInBackground(String... param) {
+    private class AsyncTaskRunner extends AsyncTask<Object, Void, Boolean>{
 
-            String path1 = param[0];
-            String path2 = param[1];
+        protected Boolean doInBackground(Object... param) {
 
-            Bitmap yourSelectedImage = BitmapFactory.decodeFile(path1);
-            Bitmap yourSelectedImage2 = BitmapFactory.decodeFile(path2);
+            Bitmap yourSelectedImage = (Bitmap)param[0];
+            Bitmap yourSelectedImage2 = (Bitmap)param[1];
             app.associate(yourSelectedImage,yourSelectedImage2);
 
             return true;
@@ -134,30 +136,45 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         protected void onPreExecute() {}
     }
 
-    private void associateTwoPhotos() {
-
-    }
-
     class Button_Clicker1 implements Button.OnClickListener
     {
         @Override
         public void onClick(View v) {
-            // Create the Intent for Image Gallery.
-            Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-            // Start new activity with the LOAD_IMAGE_RESULTS to handle back the results when image is picked from the Image Gallery.
-            startActivityForResult(i, LOAD_IMAGE_RESULTS);
+            // create intent with ACTION_IMAGE_CAPTURE action
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+            // start camera activity
+            System.out.println(intent);
+            startActivityForResult(intent, TAKE_PICTURE);
         }
     }
     class Button_Clicker2 implements Button.OnClickListener
     {
         @Override
         public void onClick(View v) {
-            // Create the Intent for Image Gallery.
-            Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-
-            // Start new activity with the LOAD_IMAGE_RESULTS to handle back the results when image is picked from the Image Gallery.
-            startActivityForResult(i, LOAD_IMAGE_RESULTS);
+            System.out.println("The size of photos is"+photos.size());
+            for(int i=0;i<photos.size()-1;i++) {
+                Bitmap file1 = photos.get(i);
+                Bitmap file2= photos.get(i+1);
+                AsyncTaskRunner runner = new AsyncTaskRunner();
+                runner.execute(file1, file2);
+            }
         }
     }
+
+    // method to check if you have a Camera
+    private boolean hasCamera(){
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
+    }
+
+    // method to check you have Camera Apps
+    private boolean hasDefualtCameraApp(String action){
+        final PackageManager packageManager = getPackageManager();
+        final Intent intent = new Intent(action);
+        List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+
+        return list.size() > 0;
+    }
+
 }
