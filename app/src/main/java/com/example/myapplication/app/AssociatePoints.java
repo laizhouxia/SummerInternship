@@ -26,7 +26,7 @@ import boofcv.alg.geo.f.FundamentalResidualSampson;
 import boofcv.factory.geo.EnumEpipolar;
 import boofcv.factory.geo.EpipolarError;
 import boofcv.factory.geo.FactoryMultiView;
-
+import org.ejml.alg.dense.decomposition.svd.SafeSvd;
 
 public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
 

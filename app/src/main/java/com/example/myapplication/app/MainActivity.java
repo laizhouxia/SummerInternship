@@ -1,15 +1,10 @@
 package com.example.myapplication.app;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -35,7 +30,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
     static int TAKE_PICTURE = 1;
 
     // GUI components
-    private Button button,button2;  // The button
+    private Button button,button2,button3;  // The button
     private ImageView image;// ImageView
 
 
@@ -53,10 +48,12 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         button = (Button)findViewById(R.id.button);
         image = (ImageView)findViewById(R.id.image);
         button2 = (Button)findViewById(R.id.button2);
+        button3 = (Button)findViewById(R.id.button3);
 
         // Set button's onClick listener object.
         button.setOnClickListener(new Button_Clicker1());
         button2.setOnClickListener(new Button_Clicker2());
+        button3.setOnClickListener(new Button_Clicker3());
 
         //Initialize associatePoints class
         Class imageType = ImageFloat32.class;
@@ -64,6 +61,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         ScoreAssociation scorer = FactoryAssociation.defaultScore(detDesc.getDescriptionType());
         AssociateDescription associate = FactoryAssociation.greedy(scorer, Double.MAX_VALUE, true);
         app = new AssociatePoints(detDesc,associate,imageType);
+
 
         //Initialize other golbal variables
         photos = new ArrayList<Bitmap>();
@@ -75,31 +73,13 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         }
 
         // Do you have Camera Apps?
-        if(hasDefualtCameraApp(MediaStore.ACTION_IMAGE_CAPTURE)){
+        if(hasDefaultCameraApp(MediaStore.ACTION_IMAGE_CAPTURE)){
             System.out.println("has camera app");
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        System.out.println("test");
-        System.out.println(resultCode+" "+requestCode+" ");
-        System.out.println(intent);
         if (requestCode == TAKE_PICTURE && resultCode == RESULT_OK && intent != null){
             // get bundle
             Bundle extras = intent.getExtras();
@@ -111,6 +91,8 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
             System.out.println("test2");
             image.setImageBitmap(bitMap);
             System.out.println("test3");
+
+
         }
     }
 
@@ -149,6 +131,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
             startActivityForResult(intent, TAKE_PICTURE);
         }
     }
+
     class Button_Clicker2 implements Button.OnClickListener
     {
         @Override
@@ -163,13 +146,21 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         }
     }
 
+    class Button_Clicker3 implements Button.OnClickListener
+    {
+        @Override
+        public void onClick(View v) {
+            System.out.println("The size of photos issssss"+photos.size());
+        }
+    }
+
     // method to check if you have a Camera
     private boolean hasCamera(){
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
 
     // method to check you have Camera Apps
-    private boolean hasDefualtCameraApp(String action){
+    private boolean hasDefaultCameraApp(String action){
         final PackageManager packageManager = getPackageManager();
         final Intent intent = new Intent(action);
         List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);

@@ -81,6 +81,7 @@
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:layout_weight="1">
+
             <Button
                 android:id="@+id/button2"
                 android:layout_width="wrap_content"
@@ -91,6 +92,15 @@
                 android:layout_marginTop="15dp"
                 android:text="associate all photos" />
 
+            <Button
+                android:id="@+id/button3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="15dp"
+                android:text="calibrate camera" />
         </LinearLayout>
     </LinearLayout>>
 </RelativeLayout>
