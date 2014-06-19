@@ -27,6 +27,9 @@ import boofcv.factory.geo.EnumEpipolar;
 import boofcv.factory.geo.EpipolarError;
 import boofcv.factory.geo.FactoryMultiView;
 import org.ejml.alg.dense.decomposition.svd.SafeSvd;
+import org.ejml.simple.SimpleMatrix;
+import org.ejml.alg.dense.decomposition.svd.SvdImplicitQrDecompose;
+import org.ejml.simple.SimpleSVD;
 
 public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
 
@@ -108,9 +111,9 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
         System.out.println("Robust");
         F.print();
 
-        F = simpleFundamental(matches);
+/*        F = simpleFundamental(matches);
         System.out.println("Simple");
-        F.print();
+        F.print();*/
     }
 
     /**
@@ -158,6 +161,52 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
                 FactoryMultiView.refineFundamental(1e-8, 400, EpipolarError.SAMPSON);
         if( !refine.fitModel(inliers, robustF.getModelParameters(), F) )
             throw new IllegalArgumentException("Failed");
+
+
+
+        DenseMatrix64F intrinsic = new DenseMatrix64F(3,3);
+
+        Double focal_length = 0.0393701 * 3.82 * 72;
+        intrinsic.set(0,0,focal_length);
+        intrinsic.set(1,1,focal_length);
+        intrinsic.set(2,2,1);
+
+        SimpleMatrix simpleF = SimpleMatrix.wrap(F);
+        SimpleMatrix simpleIntrinsic = SimpleMatrix.wrap(intrinsic);
+        SimpleMatrix E = simpleIntrinsic.transpose().mult(simpleF).mult(simpleIntrinsic);
+
+        System.out.println("Det");
+        System.out.println(E.determinant());
+        SimpleSVD s = E.svd();
+        SimpleMatrix U=s.getU();
+        SimpleMatrix D=s.getW();
+        SimpleMatrix V=s.getV();
+
+        System.out.println("E");
+        E.print();
+/*        System.out.println("U");
+        U.print();
+        System.out.println("D");
+        D.print();
+        System.out.println("V");
+        V.print();*/
+
+        SimpleMatrix W = new SimpleMatrix(3,3);
+        W.set(0,1,-1);
+        W.set(1,0,1);
+        W.set(2,2,1);
+
+        SimpleMatrix Z = new SimpleMatrix(3,3);
+        Z.set(0,1,1);
+        Z.set(1,0,-1);
+
+        SimpleMatrix T = U.mult(Z).mult(U.transpose());
+        SimpleMatrix R = U.mult(W).mult(V.transpose());
+
+        System.out.println("T");
+        T.print();
+        System.out.println("R");
+        R.print();
 
         // Return the solution
         return F;
