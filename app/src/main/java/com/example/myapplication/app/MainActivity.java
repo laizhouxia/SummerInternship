@@ -14,6 +14,7 @@ import boofcv.abst.feature.detdesc.DetectDescribePoint;
 import boofcv.abst.feature.detect.interest.ConfigFastHessian;
 import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
+import boofcv.struct.calib.IntrinsicParameters;
 import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
 import android.os.AsyncTask;
@@ -36,7 +37,8 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
     //Global variable
     AssociatePoints app;
-    ArrayList<Bitmap> photos;
+    List<Bitmap> photos;
+    ExampleStructureFromMotion sfm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +64,8 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         AssociateDescription associate = FactoryAssociation.greedy(scorer, Double.MAX_VALUE, true);
         app = new AssociatePoints(detDesc,associate,imageType);
 
+        // SFM:
+        sfm = new ExampleStructureFromMotion();
 
         //Initialize other golbal variables
         photos = new ArrayList<Bitmap>();
@@ -118,6 +122,28 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         protected void onPreExecute() {}
     }
 
+    private class AsyncTaskRunnerSFM extends AsyncTask<Object, Void, Boolean>{
+
+        protected Boolean doInBackground(Object... param) {
+
+            IntrinsicParameters in = null;
+
+            sfm.process(in, photos);
+
+            return true;
+        }
+
+        protected void onProgressUpdate()
+        {
+        }
+
+        protected void onPostExecute(Intent data) {
+
+        }
+
+        protected void onPreExecute() {}
+    }
+
     class Button_Clicker1 implements Button.OnClickListener
     {
         @Override
@@ -137,12 +163,15 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         @Override
         public void onClick(View v) {
             System.out.println("The size of photos is"+photos.size());
-            for(int i=0;i<photos.size()-1;i++) {
+            /*for(int i=0;i<photos.size()-1;i++) {
                 Bitmap file1 = photos.get(i);
                 Bitmap file2= photos.get(i+1);
                 AsyncTaskRunner runner = new AsyncTaskRunner();
                 runner.execute(file1, file2);
-            }
+            }*/
+
+            AsyncTaskRunner runner = new AsyncTaskRunner();
+            runner.execute();
         }
     }
 
