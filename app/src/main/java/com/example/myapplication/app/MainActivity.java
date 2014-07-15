@@ -28,13 +28,23 @@ import boofcv.abst.calib.PlanarCalibrationDetector;
 import boofcv.alg.geo.calibration.PlanarCalibrationTarget;
 import boofcv.core.image.ConvertBufferedImage;
 import boofcv.factory.calib.FactoryPlanarCalibrationTarget;
-import boofcv.io.UtilIO;
-import boofcv.io.image.UtilImageIO;
-import boofcv.misc.BoofMiscOps;
-import boofcv.struct.calib.IntrinsicParameters;
-import boofcv.struct.image.ImageFloat32;
-
-
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import android.graphics.BitmapFactory;
+import android.provider.MediaStore;
+import android.provider.MediaStore;
+import android.provider.MediaStore.Images;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +56,8 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
     //Global Constant
     static int TAKE_PICTURE = 1;
+    private static final int IMAGE_CAPTURE = 0;
+
 
     // GUI components
     private Button button,button2,button3;  // The button
@@ -57,6 +69,12 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
     List<Bitmap> photos;
     ExampleStructureFromMotion sfm;
     IntrinsicParameters intrinsic;
+    private Uri imageUri;
+
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,17 +118,32 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if (requestCode == TAKE_PICTURE && resultCode == RESULT_OK && intent != null){
-            // get bundle
-            Bundle extras = intent.getExtras();
+        if (requestCode == IMAGE_CAPTURE && resultCode == RESULT_OK){
 
-            // get bitmap
+            image.setImageURI(imageUri);
+
+            System.out.println("imageUri");
+            System.out.println("");
+            System.out.println("");
+
+            try
+            {
+                Bitmap temp = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                photos.add(temp);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+/*            Bundle extras = intent.getExtras();
+
+
             Bitmap bitMap = (Bitmap) extras.get("data");
             System.out.println("test1");
             photos.add(bitMap);
             System.out.println("test2");
             image.setImageBitmap(bitMap);
-            System.out.println("test3");
+            System.out.println("test3");*/
 
 
         }
@@ -165,12 +198,21 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         @Override
         public void onClick(View v) {
 
-            // create intent with ACTION_IMAGE_CAPTURE action
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String currentDateandTime = sdf.format(new Date());
 
-            // start camera activity
-            System.out.println(intent);
-            startActivityForResult(intent, TAKE_PICTURE);
+
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, currentDateandTime);
+            values.put(MediaStore.Images.Media.DESCRIPTION,
+                    "Image capture by camera");
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+            imageUri = getContentResolver().insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+            startActivityForResult(intent, IMAGE_CAPTURE);
         }
     }
 
