@@ -3,6 +3,7 @@ package com.example.myapplication.app;
 import boofcv.abst.feature.associate.AssociateDescription;
 import boofcv.abst.feature.detdesc.DetectDescribePoint;
 import boofcv.alg.feature.UtilFeature;
+import boofcv.factory.geo.FactoryTriangulate;
 import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageSingleBand;
 import georegression.struct.point.Point2D_F64;
@@ -27,6 +28,7 @@ import boofcv.factory.geo.EnumEpipolar;
 import boofcv.factory.geo.EpipolarError;
 import boofcv.factory.geo.FactoryMultiView;
 import org.ejml.alg.dense.decomposition.svd.SafeSvd;
+import org.ejml.data.FixedMatrix3x3_64F;
 
 public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
 
@@ -38,6 +40,9 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
     // location of interest points
     public List<Point2D_F64> pointsA;
     public List<Point2D_F64> pointsB;
+
+    private DenseMatrix64F F;
+
 
     Class<T> imageType;
 
@@ -97,7 +102,7 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
             }
 
         // Where the fundamental matrix is stored
-        DenseMatrix64F F;
+
         // List of matches that matched the model
         List<AssociatedPair> inliers = new ArrayList<AssociatedPair>();
 
@@ -111,7 +116,10 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
         F = simpleFundamental(matches);
         System.out.println("Simple");
         F.print();
+
     }
+
+
 
     /**
      * Detects features inside the two images and computes descriptions at those points.
