@@ -12,12 +12,29 @@ import boofcv.abst.feature.associate.AssociateDescription;
 import boofcv.abst.feature.associate.ScoreAssociation;
 import boofcv.abst.feature.detdesc.DetectDescribePoint;
 import boofcv.abst.feature.detect.interest.ConfigFastHessian;
+import boofcv.android.ConvertBitmap;
 import boofcv.factory.feature.associate.FactoryAssociation;
 import boofcv.factory.feature.detdesc.FactoryDetectDescribe;
 import boofcv.struct.calib.IntrinsicParameters;
 import boofcv.struct.feature.TupleDesc;
 import boofcv.struct.image.ImageFloat32;
 import android.os.AsyncTask;
+
+
+import boofcv.abst.calib.CalibrateMonoPlanar;
+import boofcv.abst.calib.ConfigChessboard;
+import boofcv.abst.calib.ConfigSquareGrid;
+import boofcv.abst.calib.PlanarCalibrationDetector;
+import boofcv.alg.geo.calibration.PlanarCalibrationTarget;
+import boofcv.core.image.ConvertBufferedImage;
+import boofcv.factory.calib.FactoryPlanarCalibrationTarget;
+import boofcv.io.UtilIO;
+import boofcv.io.image.UtilImageIO;
+import boofcv.misc.BoofMiscOps;
+import boofcv.struct.calib.IntrinsicParameters;
+import boofcv.struct.image.ImageFloat32;
+
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +56,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
     AssociatePoints app;
     List<Bitmap> photos;
     ExampleStructureFromMotion sfm;
-
+    IntrinsicParameters intrinsic;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,7 +86,6 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
         //Initialize other golbal variables
         photos = new ArrayList<Bitmap>();
-
 
         // Does your device have a camera?
         if(hasCamera()){
@@ -128,7 +144,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
 
 
-            sfm.process(photos);
+            sfm.process(intrinsic,photos);
 
             return true;
         }
@@ -169,7 +185,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
                 AsyncTaskRunner runner = new AsyncTaskRunner();
                 runner.execute(file1, file2);
             }*/
-
+            System.out.println("photos.size is : "+photos.size());
             AsyncTaskRunnerSFM runner = new AsyncTaskRunnerSFM();
             runner.execute();
         }
@@ -180,6 +196,36 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
         @Override
         public void onClick(View v) {
             System.out.println("The size of photos issssss"+photos.size());
+
+
+            // Detects the target and calibration point inside the target
+            PlanarCalibrationDetector detector;
+
+            // Description of the target's physical dimension
+            PlanarCalibrationTarget target;
+            // Use the wrapper below for chessboard targets.
+            detector = FactoryPlanarCalibrationTarget.detectorChessboard(new ConfigChessboard(8,8));
+
+            // physical description
+            target = FactoryPlanarCalibrationTarget.gridChess(8, 8, 30);
+
+            CalibrateMonoPlanar calibrationAlg = new CalibrateMonoPlanar(detector, false);
+
+            // tell it type type of target and which parameters to estimate
+            calibrationAlg.configure(target, true, 2);
+
+
+            for(int i=0;i<photos.size();i++) {
+                ImageFloat32 image = new ImageFloat32(photos.get(i).getWidth(),photos.get(i).getHeight());
+                image = ConvertBitmap.bitmapToGray(photos.get(i), image, null);
+                if( !calibrationAlg.addImage(image) )
+                    System.err.println("Failed to detect target in " + i);
+            }
+
+            // process and compute intrinsic parameters
+            intrinsic = calibrationAlg.process();
+            photos.clear();
+
         }
     }
 

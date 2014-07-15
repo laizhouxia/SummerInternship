@@ -118,9 +118,9 @@ public class ExampleStructureFromMotion {
     ModelMatcher<Se3_F64, Point2D3D> estimatePnP;
     ModelFitter<Se3_F64, Point2D3D> refinePnP = FactoryMultiView.refinePnP(1e-12,40);
 
-    public void process( List<Bitmap> colorImages ) {
+    public void process(IntrinsicParameters intrinsic , List<Bitmap> colorImages ) {
 
-        IntrinsicParameters intrinsic = new IntrinsicParameters(10.48, 10.48,0,0, 0,3246,2448,false, null);
+        //IntrinsicParameters intrinsic = new IntrinsicParameters(10.48, 10.48,0,0, 0,3246,2448,false, null);
         pixelToNorm = LensDistortionOps.transformRadialToNorm_F64(intrinsic);
 
         setupEssential(intrinsic);
@@ -158,6 +158,7 @@ public class ExampleStructureFromMotion {
 
         //gui.setPreferredSize(new Dimension(500,500));
         //ShowImages.showWindow(gui, "Points");
+        System.out.println("Start to print!!!!!!!!!!!!!!!!!!!!");
         for (int i=0;i<featuresAll.size();i++){
             System.out.println("Point "+i+" : "+ featuresAll.get(i));
         }

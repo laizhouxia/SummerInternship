@@ -1,5 +1,6 @@
 package com.example.myapplication.app;
 
+
 import boofcv.abst.feature.associate.AssociateDescription;
 import boofcv.abst.feature.detdesc.DetectDescribePoint;
 import boofcv.alg.feature.UtilFeature;
@@ -184,12 +185,6 @@ public class AssociatePoints<T extends ImageSingleBand, TD extends TupleDesc> {
 
         System.out.println("E");
         E.print();
-/*        System.out.println("U");
-        U.print();
-        System.out.println("D");
-        D.print();
-        System.out.println("V");
-        V.print();*/
 
         SimpleMatrix W = new SimpleMatrix(3,3);
         W.set(0,1,-1);
