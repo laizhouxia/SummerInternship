@@ -2,6 +2,7 @@ package com.example.myapplication.app;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -125,16 +126,32 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
             System.out.println("imageUri");
             System.out.println("");
             System.out.println("");
-
+            Bitmap bm;
             try
             {
-                Bitmap temp = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                photos.add(temp);
+                bm = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+
+                int width = bm.getWidth();
+                int height = bm.getHeight();
+                float scaleWidth = ((float) 340) / width;
+                float scaleHeight = ((float) 200) / height;
+                // CREATE A MATRIX FOR THE MANIPULATION
+                Matrix matrix = new Matrix();
+                // RESIZE THE BIT MAP
+                matrix.postScale(scaleWidth, scaleHeight);
+                Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+
+                photos.add(resizedBitmap);
+
             }
             catch (Exception e)
             {
                 e.printStackTrace();
             }
+
+
+
 /*            Bundle extras = intent.getExtras();
 
 

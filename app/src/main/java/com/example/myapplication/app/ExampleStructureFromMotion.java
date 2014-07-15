@@ -122,7 +122,7 @@ public class ExampleStructureFromMotion {
 
         //IntrinsicParameters intrinsic = new IntrinsicParameters(10.48, 10.48,0,0, 0,3246,2448,false, null);
         double [] radial = {0,148,-0.245};
-        IntrinsicParameters temp = new IntrinsicParameters(277.99,272.27,0,179.90,120.27,1520,2688,false,radial);
+        IntrinsicParameters temp = new IntrinsicParameters(277.99,272.27,0,179.90,120.27,340,200,false,radial);
 
         intrinsic = temp;
         pixelToNorm = LensDistortionOps.transformRadialToNorm_F64(intrinsic);
