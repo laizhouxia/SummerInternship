@@ -126,9 +126,9 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
 
         protected Boolean doInBackground(Object... param) {
 
-            IntrinsicParameters in = null;
 
-            sfm.process(in, photos);
+
+            sfm.process(photos);
 
             return true;
         }
@@ -170,7 +170,7 @@ public class MainActivity<Desc extends TupleDesc> extends ActionBarActivity{
                 runner.execute(file1, file2);
             }*/
 
-            AsyncTaskRunner runner = new AsyncTaskRunner();
+            AsyncTaskRunnerSFM runner = new AsyncTaskRunnerSFM();
             runner.execute();
         }
     }
